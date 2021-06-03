@@ -207,3 +207,4 @@ venv.bak/
 *.xml
 
 .vscode
+celerybeat-schedule
