@@ -9,8 +9,11 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import os
 from pathlib import Path
+from datetime import timedelta
+from celery.schedules import crontab
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-zq8y-(wk3j&xgy#-b8*@6a^1*ff0zp2-*1d&86w%1)=!cam%o6'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-zq8y-(wk3j&xgy#-b8*@6a^1*ff0zp2-*1d&86w%1)=!cam%o6'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -37,6 +43,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+
+    'rest_framework',
+    'rest_framework.authtoken',
+    'allauth',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'fcm_django',
+
+    'users',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +85,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'notify.wsgi.application'
+ASGI_APPLICATION = 'notify.asgi.application'
+
+AUTH_USER_MODEL = 'users.User'
 
 
 # Database
@@ -123,3 +143,94 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Django Rest Framework Settings
+# https://www.django-rest-framework.org/
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+}
+
+
+# Simple JWT Auth
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+
+    'AUTH_HEADER_TYPES': ('Bearer', 'JWT'),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=7),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=10),
+}
+
+REST_USE_JWT = True
+SITE_ID = 1
+
+
+# Django FCM Settings
+# https://github.com/xtrinch/fcm-django
+
+FCM_DJANGO_SETTINGS = {
+         # Your firebase API KEY
+        "FCM_SERVER_KEY": os.environ.get("FCM_KEY", ""),
+         # true if you want to have only one active device per registered user at a time
+         # default: False
+        "ONE_DEVICE_PER_USER": True,
+         # devices to which notifications cannot be sent,
+         # are deleted upon receiving error response from FCM
+         # default: False
+        "DELETE_INACTIVE_DEVICES": True,
+}
+
+# Email Settings
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_PORT = os.environ.get("EMAIL_PORT", 587)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "thomas@gmail.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = True
+
+
+# Celery settings
+# https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html
+
+CELERY_BROKER_URL = 'amqp://localhost'
+
+CELERY_BEAT_SCHEDULE = {
+    "sms-task": {
+        "task": "notifications.tasks.send_sms_with_schedule",
+        "schedule": crontab(minute=30)
+    },
+    "email-task": {
+        "task": "notifications.tasks.send_emails_with_schedule",
+        "schedule": crontab(minute=30)
+    }
+}
+
+CELERY_IMPORTS = [
+    'notifications.tasks',
+]
