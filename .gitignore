@@ -169,12 +169,13 @@ target/
 
 # celery beat schedule file
 celerybeat-schedule.*
+celerybeat-schedule
 
 # SageMath parsed files
 *.sage.py
 
 # Environments
-.env
+# .env
 .venv
 env/
 venv/
@@ -207,4 +208,3 @@ venv.bak/
 *.xml
 
 .vscode
-celerybeat-schedule
