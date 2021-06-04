@@ -33,3 +33,19 @@ then: `python manage.py migrate`
 #### to run celery:
 Run celery: `celery -A notify worker -l info`
 Run celery beat`celery -A notify beat --loglevel=info`
+
+
+### API Endpoints
+##### Send Notification/Emails/SMS
+Method: `POST`  
+Endpoint: 
+`/notifications/send-notification/`  
+`/notifications/send-email/`  
+`/notifications/send-sms/`  
+Payload:  
+`{
+    "subject": "subject",
+    "message": "subject",
+    "schedule_at": "2021-06-1",
+    "user": 1
+}`
