@@ -39,14 +39,14 @@ class NotificationTestCase(ServiceTestCase):
         self.assertEqual(response.status_code, 201)
 
 
-class EMailTestCase(ServiceTestCase):
+class EmailTestCase(ServiceTestCase):
     def test_send_email_view(self):
         url = reverse("send_email")
         response = self.client.post(url, data=self.data)
         self.assertEqual(response.status_code, 201)
 
 
-class EMailTestCase(ServiceTestCase):
+class SMSTestCase(ServiceTestCase):
     def test_send_sms_view(self):
         url = reverse("send_sms")
         response = self.client.post(url, data=self.data)
